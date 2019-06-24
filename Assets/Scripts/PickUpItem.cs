@@ -143,11 +143,11 @@ public class PickUpItem : MonoBehaviour {
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, 10000.0f))
+        if (Physics.Raycast(ray, out hit, pickUpRange))
         {
             if (hit.collider.tag == "Interact")
             {
-                itemPrompt.text = "Interact with " + hit.collider.gameObject.name; 
+                itemPrompt.text = "Interact?"; 
                 if (Input.GetButtonDown("Interact"))
                 {
                     hit.collider.gameObject.GetComponent<GameEventTrigger>().TriggerEvent();

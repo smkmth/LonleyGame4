@@ -10,7 +10,7 @@ public enum TriggerType
 public class GameEventTrigger : MonoBehaviour {
 
     public TriggerType howEventIsTriggered;
-
+    public bool canTriggerAgain =false;
     public bool hasBeenTriggered = false;
     public ScriptableEvent eventToTrigger;
     public AudioSource audioSource;
@@ -47,7 +47,7 @@ public class GameEventTrigger : MonoBehaviour {
 
     public void TriggerEvent()
     {
-        if (!hasBeenTriggered)
+        if (!hasBeenTriggered || canTriggerAgain)
         {
             switch (eventToTrigger.eventType)
             {

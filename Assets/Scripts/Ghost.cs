@@ -35,6 +35,7 @@ public class Ghost : MonoBehaviour
     [Header("Ghost Patrol AI")]
     public Transform[] points;
     private int destPoint;
+    public float rotSpeed;
 
     public float ghostSpotDistance;
     public float ghostSpotRadius;
@@ -70,10 +71,9 @@ public class Ghost : MonoBehaviour
     public float ghostFadeDuration;
     public float distanceToTarget;
     Renderer ghostRenderer;
-
     Coroutine fadeOut;
     Coroutine lightFade;
-
+    public float targetAngle;
     private void Start()
     {
         player = GameObject.Find("Player").transform;
@@ -108,15 +108,9 @@ public class Ghost : MonoBehaviour
 
             //set up light itencity and alpha
             ghostLight.intensity = ghostLightInitIntensity;
-            Color col = ghostMesh.GetComponent<Renderer>().material.color;
-            col.a = ghostInitAlpha;
-            if (ghostRenderer == null)
-            {
-                ghostRenderer = ghostMesh.GetComponent<Renderer>();
+            ghostMesh.GetComponent<Renderer>().material.SetFloat("_Alpha", 0.7f);
 
-            }
-            ghostRenderer.material.color = col;
-            fadeOut = StartCoroutine(FadeTo(ghostRenderer.material, 0f, ghostFadeDuration));
+            fadeOut = StartCoroutine(FadeTo(ghostMesh.GetComponent<Renderer>().material, 0f, ghostFadeDuration));
             lightFade = StartCoroutine(LightFade(0f, ghostLightDuration));
 
 
@@ -151,7 +145,6 @@ public class Ghost : MonoBehaviour
             distanceToTarget = Vector3.Distance(transform.position, target.transform.position);
             Vector3 pos = target.position;
             pos.y = 0f;
-            transform.LookAt(pos);
 
             switch (currentGhostState)
             {
@@ -181,19 +174,30 @@ public class Ghost : MonoBehaviour
                     {
                         ChangeGhostState(GhostState.Patrolling);
                     }
+                    transform.LookAt(pos);
+
                     break;
                 case GhostState.Patrolling:
- 
+
+                    // Rotate our transform a step closer to the target's.
+                    float currentAngle = Vector3.Angle(transform.forward,(transform.position - target.transform.position));
+
+
+                    var rotstep = rotSpeed * Time.deltaTime;
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.Euler(0, currentAngle, 0), rotstep);
+
+
                     if (distanceToTarget > stopDistance)
                     {
-                        float step = currentMoveSpeed * Time.deltaTime; // calculate distance to move
-                        transform.position = Vector3.MoveTowards(transform.position, pos, step);
+                        transform.position += (target.position - transform.position) * Time.deltaTime;
+
                     }
                     else
                     {
                         GotoNextPoint();
 
                     }
+
                     break;
             }
         
@@ -231,6 +235,7 @@ public class Ghost : MonoBehaviour
         // Choose the next point in the array as the destination,
         // cycling to the start if necessary.
         destPoint = (destPoint + 1) % points.Length;
+        targetAngle = Vector3.Angle(transform.forward, (transform.position - target.transform.position));
     }
 
     private void OnTriggerEnter(Collider other)
@@ -278,19 +283,30 @@ public class Ghost : MonoBehaviour
     IEnumerator FadeTo(Material material, float targetOpacity, float duration)
     {
 
-        Color color = material.color;
-        float startOpacity = color.a;
+        // Cache the current color of the material, and its initiql opacity.
+        float startOpacity = material.GetFloat("_Alpha");
 
-        float time = 0;
+        // Track how many seconds we've been fading.
+        float t = 0;
 
-        while (time < duration)
+        while (t < duration)
         {
-            time += Time.deltaTime;
-            float blend = Mathf.Clamp01(time / duration);
-            color.a = Mathf.Lerp(startOpacity, targetOpacity, blend);
-            material.color = color;
+            // Step the fade forward one frame.
+            // Step the fade forward one frame.
+            t += Time.deltaTime;
+            // Turn the time into an interpolation factor between 0 and 1.
+            float blend = Mathf.Clamp01(t / duration);
+
+            // Blend to the corresponding opacity between start & target.
+            material.SetFloat("_Alpha", Mathf.Lerp(startOpacity, targetOpacity, blend));
+
+
+
+            // Wait one frame, and repeat.
             yield return null;
         }
+        yield return null;
+        
     }
 
     public void GhostAudio()

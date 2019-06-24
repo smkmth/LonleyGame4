@@ -25,6 +25,8 @@ public class InGameCamera : MonoBehaviour
     public GameObject blackoutPanel;
     public bool isFlashOn;
     public Ghost ghost;
+    public float cameraTimer;
+    public float timeBetweenShots;
 
     public void Start()
     {
@@ -51,6 +53,7 @@ public class InGameCamera : MonoBehaviour
                 isFlashOn = true;
             }
         }
+
 
         if (Input.GetButtonDown("TakePhoto"))
         {
